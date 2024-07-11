@@ -1,7 +1,7 @@
 import mongoose, { Schema } from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { use } from "react";
+
 
 const userSchema = new Schema(
 	{
@@ -45,6 +45,7 @@ const userSchema = new Schema(
 		},
 		refreshToken: {
 			type: String,
+			default:null
 		},
 	},
 	{
@@ -52,10 +53,10 @@ const userSchema = new Schema(
 	}
 );
 
-userSchema.pre("save", function (next) {
+userSchema.pre("save", async function (next) {
 	if (!this.isModified("password")) return next();
 
-	this.password = bcrypt.hash(this.password, 10);
+	this.password = await bcrypt.hash(this.password, 10);
 	next();
 });
 

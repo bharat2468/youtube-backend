@@ -11,7 +11,7 @@ const storage = multer.diskStorage({
 });
 
 // Configure Multer for file uploads
-export const upload = multer({
+const upload = multer({
 	storage: storage,
 	fileFilter: (req, file, cb) => {
 		// Validate file types
@@ -25,3 +25,5 @@ export const upload = multer({
 		fileSize: 1024 * 1024 * 5, // 5MB file size limit
 	},
 });
+
+export {upload};
