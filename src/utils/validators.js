@@ -1,80 +1,65 @@
-import { body } from "express-validator";
+import { z } from "zod";
 
-// Validators for registration
-const usernameRegistrationValidation = body("username")
-	.notEmpty()
-	.withMessage("Username is required")
-	.bail()
-	.isLength({ min: 3, max: 20 })
-	.withMessage("Username must be between 3 and 20 characters")
-	.matches(/^[a-zA-Z0-9_]+$/)
-	.withMessage("Username can only contain letters, numbers, and underscores");
+// Complex validation functions
+const isEmail = z
+	.string()
+	.min(1, "Email is required")
+	.email("Invalid email format")
+	.transform((email) => email.trim().toLowerCase());
 
-const emailRegistrationValidation = body("email")
-	.notEmpty()
-	.withMessage("Email is required")
-	.bail()
-	.isEmail()
-	.withMessage("Invalid email format")
-	.normalizeEmail();
+const isUsername = z
+	.string()
+	.min(3, "Username must be at least 3 characters")
+	.max(20, "Username must be at most 20 characters")
+	.regex(
+		/^[a-zA-Z0-9_]+$/,
+		"Username can only contain letters, numbers, and underscores"
+	);
 
-const passwordRegistrationValidation = body("password")
-	.notEmpty()
-	.withMessage("Password is required")
-	.bail()
-	.isLength({ min: 8 })
-	.withMessage("Password must be at least 8 characters long")
-	.matches(/\d/)
-	.withMessage("Password must contain at least one number")
-	.matches(/[a-z]/)
-	.withMessage("Password must contain at least one lowercase letter")
-	.matches(/[A-Z]/)
-	.withMessage("Password must contain at least one uppercase letter")
-	.matches(/[!@#$%^&*(),.?":{}|<>]/)
-	.withMessage("Password must contain at least one special character");
+const isFullName = z
+	.string()
+	.min(1, "Full name is required")
+	.regex(/^[a-zA-Z\s]+$/, "Full name can only contain letters and spaces");
 
-const fullnameRegistrationValidation = body("fullName")
-	.notEmpty()
-	.withMessage("Full name is required")
-	.bail()
-	.matches(/^[a-zA-Z\s]+$/)
-	.withMessage("Full name can only contain letters and spaces");
+const passwordComplexity = z
+	.string()
+	.min(8, "Password must be at least 8 characters long")
+	.regex(/\d/, "Password must contain at least one number")
+	.regex(/[a-z]/, "Password must contain at least one lowercase letter")
+	.regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+	.regex(
+		/[!@#$%^&*(),.?":{}|<>]/,
+		"Password must contain at least one special character"
+	);
 
-const validateRegisterFields = [
-	usernameRegistrationValidation,
-	emailRegistrationValidation,
-	passwordRegistrationValidation,
-	fullnameRegistrationValidation,
-];
+// !Schema definitions
+const registrationSchema = z.object({
+	username: isUsername,
+	email: isEmail,
+	password: passwordComplexity,
+	fullName: isFullName,
+});
 
-// Validators for login
-const usernameLoginValidation = body("username")
-	.if(body("email").isEmpty())
-	.notEmpty()
-	.withMessage("Username is required")
-	.bail()
-	.isLength({ min: 3, max: 20 })
-	.withMessage("Invalid username")
-	.matches(/^[a-zA-Z0-9_]+$/)
-	.withMessage("Invalid username");
+const loginSchema = z.object({
+	username: isUsername.optional(),
+	email: isEmail.optional(),
+	password: z.string().min(1, "Password is required"),
+});
 
-const emailLoginValidation = body("email")
-	.if(body("username").isEmpty())
-	.notEmpty()
-	.withMessage("Email is required")
-	.bail()
-	.isEmail()
-	.withMessage("Invalid email")
-	.normalizeEmail();
+const changePasswordSchema = z.object({
+	oldPassword: z.string().min(1, "Old password is required"),
+	newPassword: passwordComplexity,
+});
 
-const passwordLoginValidation = body("password")
-	.notEmpty()
-	.withMessage("Password is required");
+const updateUserSchema = z.object({
+	fullName: isFullName.optional(),
+	email: isEmail.optional(),
+});
 
-const validateLoginFields = [
-	usernameLoginValidation,
-	emailLoginValidation,
-	passwordLoginValidation,
-];
-
-export { validateRegisterFields, validateLoginFields };
+// !Export schemas
+export {
+	registrationSchema,
+	loginSchema,
+	changePasswordSchema,
+	updateUserSchema,
+};
